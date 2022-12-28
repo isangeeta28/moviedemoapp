@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:moviedemoapp/views/first_screen.dart';
+import 'package:moviedemoapp/views/login_screen.dart';
 
 import 'views/home_tabb_bar_screen.dart';
 
@@ -18,7 +20,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: HomeTabbarScreen(),
+      home: FirstScreen(),
+      //HomeTabbarScreen(),
     );
   }
 }

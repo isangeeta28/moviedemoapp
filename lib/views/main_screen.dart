@@ -2,7 +2,9 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:geocode/geocode.dart';
 import 'package:get/get.dart';
+import 'package:location/location.dart';
 
 import '../controller/playing_in_thearter_movie_controller.dart';
 import '../controller/popular_movie_controller.dart';
@@ -11,6 +13,7 @@ import 'package:intl/intl.dart';
 import '../controller/top_rated_movie_controller.dart';
 import '../controller/trending_movie_controller.dart';
 import '../controller/upcoming_movie_controller.dart';
+import 'detail_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -22,6 +25,51 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   //TrendingMovieController trendingMovieController = Get.put(TrendingMovieController());
   PopularMovieController popularmovieCon = Get.put(PopularMovieController());
+
+  LocationData? currentLocation;
+  // String address = "";
+
+  @override
+  void initState() {
+    //context.loaderOverlay.show();
+    Future<String> _getAddress(double? lat, double? lang) async {
+      if (lat == null || lang == null) return "";
+      Address? addresses;
+      await GeoCode().reverseGeocoding(latitude: lat, longitude: lang).
+      then((val) {
+        print(val.city);
+        addresses = val;
+        setState(() {});
+        return val.city??"";
+
+      }).catchError((onError){
+        _getAddress(lat,lang);
+      });
+      setState(() {
+
+      });
+      return "${addresses?.city}";
+    }
+
+    _getLocation().then((value) {
+      LocationData? location = value;
+      _getAddress(location?.latitude, location?.longitude)
+          .then((value) {
+        setState(() {
+          currentLocation = location;
+
+        });
+        setState(() {
+
+        });
+      });
+    }
+    );
+    super.initState();
+
+    // saveeventcon.newcityController.value =  address;
+    // print(address);
+  }
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -89,39 +137,49 @@ class _MainScreenState extends State<MainScreen> {
                             var dateTime =  DateTime.parse("$date");
                             var stdTime =  DateFormat('MMM-dd-yyyy').format(dateTime).toString();
                             var image = "http://image.tmdb.org/t/p/w500${popularmovieCon.popularovieData.value.results?[i].posterPath??""}";
-                            return SizedBox(
-                                height: Get.height*0.33,
-                                width: Get.width*0.35,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                   Container(
-                                     height: Get.height*0.25,
-                                       decoration: BoxDecoration(
-                                         borderRadius: BorderRadius.circular(20),
-                                         image: DecorationImage(
-                                           image: NetworkImage(image)
-                                         )
-                                       ),
-                                       //child: Image.network(image)
-                                   ),
-                                    SizedBox(height: Get.height*0.01,),
-                                    Padding(
-                                      padding:  EdgeInsets.only(left: Get.width*0.02),
-                                      child: Text(popularmovieCon.popularovieData.value.results?[i].title??"",
-                                        style: TextStyle(color: CupertinoColors.activeBlue,fontWeight: FontWeight.w500),
+                            return GestureDetector(
+                              onTap: (){
+                                Get.to(()=>DetailsScreen(
+                                    title: popularmovieCon.popularovieData.value.results?[i].title??"",
+                                    description: popularmovieCon.popularovieData.value.results?[i].originalTitle??"",
+                                  image: image,
+                                  date: stdTime
+                                ));
+                              },
+                              child: SizedBox(
+                                  height: Get.height*0.33,
+                                  width: Get.width*0.35,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                     Container(
+                                       height: Get.height*0.25,
+                                         decoration: BoxDecoration(
+                                           borderRadius: BorderRadius.circular(20),
+                                           image: DecorationImage(
+                                             image: NetworkImage(image)
+                                           )
+                                         ),
+                                         //child: Image.network(image)
+                                     ),
+                                      SizedBox(height: Get.height*0.01,),
+                                      Padding(
+                                        padding:  EdgeInsets.only(left: Get.width*0.02),
+                                        child: Text(popularmovieCon.popularovieData.value.results?[i].title??"",
+                                          style: TextStyle(color: CupertinoColors.activeBlue,fontWeight: FontWeight.w500),
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(height: Get.height*0.01,),
-                                    Padding(
-                                      padding:  EdgeInsets.only(left: Get.width*0.02),
-                                      child: Text(stdTime,
-                                        style: TextStyle(color: Colors.grey,fontWeight: FontWeight.w600),
+                                      SizedBox(height: Get.height*0.01,),
+                                      Padding(
+                                        padding:  EdgeInsets.only(left: Get.width*0.02),
+                                        child: Text(stdTime,
+                                          style: TextStyle(color: Colors.grey,fontWeight: FontWeight.w600),
+                                        ),
                                       ),
-                                    ),
 
-                                  ],
-                                )
+                                    ],
+                                  )
+                              ),
                             );
                           }
                         ),),
@@ -192,75 +250,85 @@ class TopRated extends StatelessWidget {
                           var dateTime =  DateTime.parse("$date");
                           var stdTime =  DateFormat('MMM-dd-yyyy').format(dateTime).toString();
                           var images = "http://image.tmdb.org/t/p/w500${topRatedMovieController.topratedData.value.results?[i].posterPath??""}";
-                          return Container(
-                              height: Get.height*0.33,
-                              width: Get.width*0.74,
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade50,
-                                borderRadius: BorderRadius.circular(20)
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    height: Get.height*0.25,
-                                    width: Get.width*0.74,
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.only(
-                                          topRight: Radius.circular(20.0),
-                                          topLeft: Radius.circular(20.0),),
-                                        image: DecorationImage(
-                                            image: NetworkImage(images),fit: BoxFit.fill
+                          return GestureDetector(
+                            onTap: (){
+                              Get.to(()=>DetailsScreen(
+                                  title: topRatedMovieController.topratedData.value.results?[i].title??"",
+                                  description: topRatedMovieController.topratedData.value.results?[i].originalTitle??"",
+                                  image: images,
+                                  date: stdTime
+                              ));
+                            },
+                            child: Container(
+                                height: Get.height*0.33,
+                                width: Get.width*0.74,
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(20)
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      height: Get.height*0.25,
+                                      width: Get.width*0.74,
+                                      decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.only(
+                                            topRight: Radius.circular(20.0),
+                                            topLeft: Radius.circular(20.0),),
+                                          image: DecorationImage(
+                                              image: NetworkImage(images),fit: BoxFit.fill
+                                          )
+                                      ),
+                                      //child: Image.network(image)
+                                    ),
+                                    SizedBox(height: Get.height*0.01,),
+                                    Padding(
+                                        padding:  EdgeInsets.only(left: Get.width*0.02),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            SizedBox(
+                                              width: Get.width*0.32,
+                                              child: Text(topRatedMovieController.topratedData.value.results?[i].title??"",
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 2,
+                                                style: TextStyle(color: CupertinoColors.activeBlue,fontWeight: FontWeight.w500),
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              width: Get.width*0.33,
+                                              child: RatingBar.builder(
+                                                initialRating: topRatedMovieController.topratedData.value.results?[i].voteAverage??3,
+                                                minRating: 1,
+                                                direction: Axis.horizontal,
+                                                allowHalfRating: true,
+                                                itemCount: 5,
+                                                itemSize: 22.0,
+                                                itemPadding: EdgeInsets.all(1),
+                                                itemBuilder: (context, _) => Icon(
+                                                  Icons.star,
+                                                  color: Colors.amber,size: 4,
+                                                ),
+                                                onRatingUpdate: (rating) {
+                                                  print(rating);
+                                                },
+                                              ),
+                                            )
+                                          ],
                                         )
                                     ),
-                                    //child: Image.network(image)
-                                  ),
-                                  SizedBox(height: Get.height*0.01,),
-                                  Padding(
+                                    SizedBox(height: Get.height*0.01,),
+                                    Padding(
                                       padding:  EdgeInsets.only(left: Get.width*0.02),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          SizedBox(
-                                            width: Get.width*0.32,
-                                            child: Text(topRatedMovieController.topratedData.value.results?[i].title??"",
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 2,
-                                              style: TextStyle(color: CupertinoColors.activeBlue,fontWeight: FontWeight.w500),
-                                            ),
-                                          ),
-                                          SizedBox(
-                                            width: Get.width*0.33,
-                                            child: RatingBar.builder(
-                                              initialRating: topRatedMovieController.topratedData.value.results?[i].voteAverage??3,
-                                              minRating: 1,
-                                              direction: Axis.horizontal,
-                                              allowHalfRating: true,
-                                              itemCount: 5,
-                                              itemSize: 22.0,
-                                              itemPadding: EdgeInsets.all(1),
-                                              itemBuilder: (context, _) => Icon(
-                                                Icons.star,
-                                                color: Colors.amber,size: 4,
-                                              ),
-                                              onRatingUpdate: (rating) {
-                                                print(rating);
-                                              },
-                                            ),
-                                          )
-                                        ],
-                                      )
-                                  ),
-                                  SizedBox(height: Get.height*0.01,),
-                                  Padding(
-                                    padding:  EdgeInsets.only(left: Get.width*0.02),
-                                    child: Text("Genre",
-                                      style: TextStyle(color: CupertinoColors.activeBlue,fontWeight: FontWeight.w600),
+                                      child: Text("Genre",
+                                        style: TextStyle(color: CupertinoColors.activeBlue,fontWeight: FontWeight.w600),
+                                      ),
                                     ),
-                                  ),
 
-                                ],
-                              )
+                                  ],
+                                )
+                            ),
                           );
                         }
                     ),),
@@ -325,44 +393,54 @@ class UpComingMovie extends StatelessWidget {
                           var dateTime =  DateTime.parse("$date");
                           var stdTime =  DateFormat('MMM-dd-yyyy').format(dateTime).toString();
                           var images = "http://image.tmdb.org/t/p/w500${upComingMovieController.upomingmovieData.value.results?[i].posterPath??""}";
-                          return SizedBox(
-                              height: Get.height*0.33,
-                              width: Get.width*0.35,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    height: Get.height*0.25,
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(20),
-                                        image: DecorationImage(
-                                            image: NetworkImage(images)
-                                        )
+                          return GestureDetector(
+                            onTap: (){
+                              Get.to(()=>DetailsScreen(
+                                  title: upComingMovieController.upomingmovieData.value.results?[i].title??"",
+                                  description: upComingMovieController.upomingmovieData.value.results?[i].originalTitle??"",
+                                  image: images,
+                                  date: stdTime
+                              ));
+                            },
+                            child: SizedBox(
+                                height: Get.height*0.33,
+                                width: Get.width*0.35,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      height: Get.height*0.25,
+                                      decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(20),
+                                          image: DecorationImage(
+                                              image: NetworkImage(images)
+                                          )
+                                      ),
+                                      //child: Image.network(image)
                                     ),
-                                    //child: Image.network(image)
-                                  ),
-                                  SizedBox(height: Get.height*0.01,),
-                                  Padding(
-                                    padding:  EdgeInsets.only(left: Get.width*0.02),
-                                    child: SizedBox(
-                                      width: Get.width*0.25,
-                                      child: Text(upComingMovieController.upomingmovieData.value.results?[i].title??"",
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 2,
-                                        style: TextStyle(color: CupertinoColors.activeBlue,fontWeight: FontWeight.w500),
+                                    SizedBox(height: Get.height*0.01,),
+                                    Padding(
+                                      padding:  EdgeInsets.only(left: Get.width*0.02),
+                                      child: SizedBox(
+                                        width: Get.width*0.25,
+                                        child: Text(upComingMovieController.upomingmovieData.value.results?[i].title??"",
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 2,
+                                          style: TextStyle(color: CupertinoColors.activeBlue,fontWeight: FontWeight.w500),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(height: Get.height*0.01,),
-                                  Padding(
-                                    padding:  EdgeInsets.only(left: Get.width*0.02),
-                                    child: Text(stdTime,
-                                      style: TextStyle(color: Colors.grey,fontWeight: FontWeight.w600),
+                                    SizedBox(height: Get.height*0.01,),
+                                    Padding(
+                                      padding:  EdgeInsets.only(left: Get.width*0.02),
+                                      child: Text(stdTime,
+                                        style: TextStyle(color: Colors.grey,fontWeight: FontWeight.w600),
+                                      ),
                                     ),
-                                  ),
 
-                                ],
-                              )
+                                  ],
+                                )
+                            ),
                           );
                         }
                     ),),
@@ -425,44 +503,54 @@ class TrendingMovie extends StatelessWidget {
                           var dateTime =  DateTime.parse("$date");
                           var stdTime =  DateFormat('MMM-dd-yyyy').format(dateTime).toString();
                           var images = "http://image.tmdb.org/t/p/w500${trendingmovieCon.trendingmovieData.value.results?[i].posterPath??""}";
-                          return SizedBox(
-                              height: Get.height*0.33,
-                              width: Get.width*0.35,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    height: Get.height*0.25,
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(20),
-                                        image: DecorationImage(
-                                            image: NetworkImage(images)
-                                        )
+                          return GestureDetector(
+                            onTap: (){
+                              Get.to(()=>DetailsScreen(
+                                  title: trendingmovieCon.trendingmovieData.value.results?[i].title??"",
+                                  description: trendingmovieCon.trendingmovieData.value.results?[i].originalTitle??"",
+                                  image: images,
+                                  date: stdTime
+                              ));
+                            },
+                            child: SizedBox(
+                                height: Get.height*0.33,
+                                width: Get.width*0.35,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      height: Get.height*0.25,
+                                      decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(20),
+                                          image: DecorationImage(
+                                              image: NetworkImage(images)
+                                          )
+                                      ),
+                                      //child: Image.network(image)
                                     ),
-                                    //child: Image.network(image)
-                                  ),
-                                  SizedBox(height: Get.height*0.01,),
-                                  Padding(
-                                    padding:  EdgeInsets.only(left: Get.width*0.02),
-                                    child: SizedBox(
-                                      width: Get.width*0.25,
-                                      child: Text(trendingmovieCon.trendingmovieData.value.results?[i].title??"",
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 2,
-                                        style: TextStyle(color: CupertinoColors.activeBlue,fontWeight: FontWeight.w500),
+                                    SizedBox(height: Get.height*0.01,),
+                                    Padding(
+                                      padding:  EdgeInsets.only(left: Get.width*0.02),
+                                      child: SizedBox(
+                                        width: Get.width*0.25,
+                                        child: Text(trendingmovieCon.trendingmovieData.value.results?[i].title??"",
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 2,
+                                          style: TextStyle(color: CupertinoColors.activeBlue,fontWeight: FontWeight.w500),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(height: Get.height*0.01,),
-                                  Padding(
-                                    padding:  EdgeInsets.only(left: Get.width*0.02),
-                                    child: Text(stdTime,
-                                      style: TextStyle(color: Colors.grey,fontWeight: FontWeight.w600),
+                                    SizedBox(height: Get.height*0.01,),
+                                    Padding(
+                                      padding:  EdgeInsets.only(left: Get.width*0.02),
+                                      child: Text(stdTime,
+                                        style: TextStyle(color: Colors.grey,fontWeight: FontWeight.w600),
+                                      ),
                                     ),
-                                  ),
 
-                                ],
-                              )
+                                  ],
+                                )
+                            ),
                           );
                         }
                     ),),
@@ -589,6 +677,35 @@ class MyImageView extends StatelessWidget{
     );
   }
 
+}
+
+Future<LocationData?> _getLocation() async {
+  Location location = new Location();
+  LocationData _locationData;
+
+  bool _serviceEnabled;
+  PermissionStatus _permissionGranted;
+
+  _serviceEnabled = await location.serviceEnabled();
+  if (!_serviceEnabled) {
+    _serviceEnabled = await location.requestService();
+    if (!_serviceEnabled) {
+      return null;
+    }
+  }
+
+  _permissionGranted = await location.hasPermission();
+  if (_permissionGranted == PermissionStatus.denied) {
+    _permissionGranted = await location.requestPermission();
+    if (_permissionGranted != PermissionStatus.granted) {
+      return null;
+    }
+  }
+
+
+  _locationData = await location.getLocation();
+
+  return _locationData;
 }
 
 
